@@ -1,0 +1,37 @@
+name: Checkmarx One Scan
+on:
+  push:
+    branches:
+      - main
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Checkmarx One CLI Action
+        uses: checkmarx/ast-github-action@main #Github Action version
+        with:
+          project_name: carvalhal/PedroPHPWebGoat
+          cx_tenant: cx_seg
+          base_uri: https://eu.ast.checkmarx.net/
+          cx_client_id: ${{ secrets.CX_CLIENT_ID }}
+          cx_client_secret: ${{ secrets.CX_CLIENT_SECRET }}
+          additional_params: --debug --report-format sarif \           
+            --scs-repo-url https://github.com/${{ github.repository }} \
+            --scs-repo-token ${{ secrets.GIT_PUSH_TOKEN }} \
+            --sca-exploitable-path true #\
+      
+      - name: Upload Checkmarx SARIF report
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: cx_result.sarif 
+      - name: Upload XML Artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: cx_result.sarif
+          path: cx_result.sarif
